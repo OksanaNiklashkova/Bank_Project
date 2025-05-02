@@ -1,6 +1,5 @@
 from unittest.mock import patch, mock_open
 import json
-from datetime import datetime
 import pytest
 
 from src.views import get_current_hour
@@ -11,6 +10,7 @@ def test_get_current_hour() -> None:
     проверяет, что возвращаемое значение - целое число"""
     result = get_current_hour()
     assert isinstance(result, int)
+
 
 def test_main1(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> None:
     """Тест для функции main - норма"""
@@ -64,12 +64,10 @@ def test_main2(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> 
          patch('src.views.get_exchange_rate', return_value={"currencies": [{"currency": "USD", "rate": 81.726},]}),\
          patch("src.views.get_stocks_rates", return_value={"stocks": [{"stock": "AAPL", "price": "212.44"},]}):
 
-
          src.views.main()
          captured = capsys.readouterr()
          assert "Формат данных не соответствует запросу!" in captured.out
          assert "Данные о транзакциях за период отсутствуют" in captured.out
-
 
 
 def test_main3(capsys: pytest.CaptureFixture[str]) -> None:
@@ -89,3 +87,20 @@ def test_main3(capsys: pytest.CaptureFixture[str]) -> None:
                     captured = capsys.readouterr()
                     assert expected_greeting in captured.out
                     assert "Не удалось получить данные о транзакциях" in captured.out
+
+
+def test_main_logging(get_transactions_2, capsys):
+    """Тест проверяет запись в лог при завершении работы"""
+    test_settings = {
+        "user_currencies": ["USD"],
+        "user_main_currency": "RUB",
+        "user_stocks": ["AAPL"]
+    }
+
+    with patch('src.views.get_current_hour', return_value=12), \
+            patch('src.views.make_transactions', return_value=get_transactions_2), \
+            patch("builtins.input", return_value="19.01.2023"), \
+            patch('builtins.open', mock_open(read_data=json.dumps(test_settings))), \
+            patch('src.views.views_logger.info') as mock_logger:
+        src.views.main()
+        mock_logger.assert_any_call("Завершение работы...")

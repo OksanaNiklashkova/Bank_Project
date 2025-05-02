@@ -14,13 +14,36 @@ services_logger.addHandler(file_handler)
 
 from src.utils import make_transactions
 
+def search_by_target(transactions: list) -> str:
+    """Функция возвращает JSON со всеми транзакциями,
+    содержащими в описании или категории строку, заданную пользователем"""
+    services_logger.info("получение списка транзакций и ключевого слова для поиска")
+    transactions = make_transactions()
+    input_target = input("Введите значение для поиска: ").strip()
+
+    target = re.compile(rf'(?:^|\s){input_target}(?:$|\s)', flags=re.IGNORECASE)
+    print(target)
+    matched_transactions = []
+    for transaction in transactions:
+        description = transaction.get("Описание", "")
+        category = transaction.get("Категория", "")
+        if re.search(target, str(description)) or\
+                re.search(target, str(category)):
+            matched_transactions.append(transaction)
+    if len(matched_transactions) != 0:
+        services_logger.info("поиск произведен успешно")
+        return json.dumps(matched_transactions, ensure_ascii=False)
+    else:
+        services_logger.warning("поиск не дал результатов")
+        return json.dumps({"Результаты поиска": "Ничего не нашлось"}, ensure_ascii=False)
+
 def search_by_phones(transactions: list) -> str:
     """Функция возвращает JSON со всеми транзакциями,
-    содержащими в описании мобильные номера."""
+    содержащими в описании мобильные номера"""
     services_logger.info("получение списка транзакций")
     phones_transactions = []
     for transaction in transactions:
-        if re.search(r'(?:\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}', transaction.get("Описание", ""), flags=0):
+        if re.search(r'(?:^|\s)(?:\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}(?:$|\s)', transaction.get("Описание", "")):
             phones_transactions.append(transaction)
     services_logger.info("формирование ответа")
     if len(phones_transactions) != 0:
@@ -32,5 +55,4 @@ def search_by_phones(transactions: list) -> str:
 
 
 if __name__ == '__main__':
-    transactions = make_transactions()
-    print(search_by_phones(transactions))
+    print(search_by_target(make_transactions()))
