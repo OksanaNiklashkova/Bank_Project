@@ -5,7 +5,8 @@ import pytest
 
 
 @pytest.fixture
-def get_transactions():
+def get_transactions() -> list:
+    """Фикстура, возвращающая список транзакций"""
     return [
         {"Дата операции": "10.01.2018 12:41:24",
           "Номер карты": "*5441",
@@ -40,7 +41,9 @@ def get_transactions():
     ]
 
 @pytest.fixture
-def get_expected():
+def get_expected() -> dict:
+    """Фикстура, возвращающая словарь с транзакциями,
+    сгруппированными по номеру карты"""
     return {'Номер карты': '*4556',
             'Транзакции':
                 [{'Дата операции': '12.01.2018 11:10:05',
@@ -56,7 +59,8 @@ def get_expected():
             }
 
 @pytest.fixture
-def get_transactions_1():
+def get_transactions_1() -> list:
+    """Фикстура, возвращающая список транзакций по одной карте"""
     return [{'Номер карты': '*4556',
             'Транзакции':
                 [{'Дата операции': '12.01.2018 11:10:05',
@@ -72,7 +76,8 @@ def get_transactions_1():
             },]
 
 @pytest.fixture
-def get_transactions_2():
+def get_transactions_2() -> list:
+    """Фикстура, возвращающая список транзакций с категориями и описанием"""
     return [
         {"Дата операции": "10.01.2018 12:41:24",
           "Номер карты": "*5441",

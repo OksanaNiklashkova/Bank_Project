@@ -34,13 +34,21 @@ def main() -> None:
     if not transactions or not isinstance(transactions, list) or len(transactions) == 0:
         data["Ошибка"] = "Не удалось получить данные о транзакциях"
     else:
-        act_date = input("Введите дату: ")
+        correct_act_date = None
+        while not correct_act_date:
+            act_date = input("Введите дату в формате ДД.ММ.ГГГГ: ")
+            try:
+                correct_act_date = datetime.strptime(act_date, "%d.%m.%Y")
+            except ValueError:
+                print("Формат данных не соответствует запросу!")
+
         # проверяем, есть ли в файле данные за выбранный период
-        if not datetime.strptime("01.01.2018", "%d.%m.%Y")< datetime.strptime(act_date, "%d.%m.%Y") < datetime.strptime("31.12.2021", "%d.%m.%Y"):
+        if not datetime.strptime("01.01.2018", "%d.%m.%Y")< correct_act_date < datetime.strptime("31.12.2021", "%d.%m.%Y"):
             # если данных за период нет, добавляем в ответ сообщение об ошибке
             data["Ошибка"] = "Данные о транзакциях за период отсутствуют"
         else:
             # если данные за период получены, производим обработку
+            act_date = correct_act_date.strftime("%d.%m.%Y")
             transactions = filter_by_currency_month(transactions, act_date)
             data["cards"] = get_card_info(filtered_by_card_number(transactions))
             data['top_transactions'] = get_top_transactions(transactions)
