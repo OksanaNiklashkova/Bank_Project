@@ -1,9 +1,11 @@
+import json
 from typing import Any, Dict
 import os
 import requests
 from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime
+from json.decoder import NaN
 
 
 load_dotenv()
@@ -28,27 +30,40 @@ def make_transactions(file_path: str | None = None) -> Any:
 
 def filter_by_currency_month(transactions: list, act_date: str) -> list:
     """Функция отбирает транзакции за текущий месяц"""
-    end_date = datetime.strptime(act_date, "%d.%m.%Y")
-    start_date = end_date.replace(day=1)
-    filtered_by_month_transactions = []
-    for t in transactions:
-        t_date = datetime.strptime(t.get('Дата операции', "01.01.2000").split()[0], "%d.%m.%Y")
-        if start_date <= t_date <= end_date:
-            filtered_by_month_transactions.append(t)
-    transactions = filtered_by_month_transactions
-    return transactions
+    try:
+        end_date = datetime.strptime(act_date, "%d.%m.%Y")
+        start_date = end_date.replace(day=1)
+        filtered_by_month_transactions = []
+        for t in transactions:
+            t_date = datetime.strptime(t.get('Дата операции', "01.01.2000").split()[0], "%d.%m.%Y")
+            if start_date <= t_date <= end_date:
+                filtered_by_month_transactions.append(t)
+        transactions = filtered_by_month_transactions
+        return transactions
+    except ValueError:
+        return []
 
 def get_top_transactions(transactions: list) -> dict:
     """Функция вычисляет ТОП-5 транзакций по сумме"""
     transactions_df = pd.DataFrame(transactions)
-    top_df = transactions_df.sort_values(by='Сумма платежа', ascending=False, key=lambda x: abs(x))[:5]
-    top_transactions = top_df.to_dict(orient="records")
-    return top_transactions
+    top_df = transactions_df.sort_values(by='Сумма платежа', ascending=False, key=lambda x: abs(x)).head(5)
+    formatted_transactions = []
+    for _, row in top_df.iterrows():
+        formatted_transactions.append({
+            'date': row['Дата операции'].split()[0],
+            'amount': float(row['Сумма платежа']),
+            'category': row['Категория'],
+            'description': row['Описание']
+        })
+    return {'top_transactions': formatted_transactions}
 
 
 def filtered_by_card_number(transactions: list) -> list[Dict]:
     """Функция сортирует транзакции по номеру карты"""
     transactions_df = pd.DataFrame(transactions)
+    transactions_df['Номер карты'] = (
+        transactions_df['Номер карты'].astype(str).replace('nan', '----')
+    )
     transactions_by_cards = [
         {'Номер карты': card, 'Транзакции': group.to_dict('records')}
         for card, group in transactions_df.groupby('Номер карты')
@@ -59,7 +74,7 @@ def filtered_by_card_number(transactions: list) -> list[Dict]:
 def get_card_info(transactions: list) -> list:
     """Функция получает выводимую информацию: номер карты,
     сумму расходов за текущий месяц, включая дату, указанную в запросе,
-    начисленный кешбэк, ТОП-5 транзакций по сумме"""
+    начисленный кешбэк"""
     cards = []
     for item in transactions:
         card = {}
@@ -83,9 +98,11 @@ def get_exchange_rate(currency_op: list, currency_main: str) -> list:
         response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
-        currency_rates.append(data)
+        currency_rate = {}
+        currency_rate["currency"] = item
+        currency_rate["rate"] = data.get("rate", "Данные отсутствуют")
+        currency_rates.append(currency_rate)
     return currency_rates
-
 
 
 def get_stocks_rates(stocks: list) -> list:
@@ -99,7 +116,8 @@ def get_stocks_rates(stocks: list) -> list:
         response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
-        data['price'] = round(float(data['price']), 2)
-        stock_info.update(data)
+        stock_info['price'] = data.get('price', 'Данные отсутствуют')
+        if isinstance(stock_info['price'], int|float):
+            stock_info['price'] = round(float(stock_info['price']), 2)
         stocks_rates.append(stock_info)
     return stocks_rates
