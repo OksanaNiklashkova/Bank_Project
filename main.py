@@ -49,9 +49,9 @@ def main() -> None:
         category = input("Введите категорию для формирования отчета: ")
         date = input("Введите дату для формирования отчета в формате 'ДД.ММ.ГГГГ': ")
         spending_by_category_result = spending_by_category(transactions, category, date)
-        total_amount = spending_by_category_result['Сумма платежа'].sum()
+        total_amount = round(spending_by_category_result['Сумма платежа'].sum(), 2)
         print(f"""Общая сумма расходов по категории '{category}' - {total_amount}
-Подробнее со списком транзакций можно ознакомиться в файле report.json""")
+Подробнее со списком транзакций можно ознакомиться в файле reports_data/report.json""")
 
 
 if __name__ == '__main__':
