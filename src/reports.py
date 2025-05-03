@@ -70,7 +70,3 @@ def spending_by_category(transactions: pd.DataFrame,
     filtered_transactions_df['Дата операции'] = filtered_transactions_df['Дата операции'].dt.strftime('%d.%m.%Y %H:%M:%S')
 
     return filtered_transactions_df
-
-
-if __name__ == '__main__':
-    print((spending_by_category(transactions=pd.DataFrame(make_transactions()), category="Переводы", date="02.02.2021")))

@@ -80,7 +80,3 @@ def main_views() -> None:
     json_response = json.dumps(data, ensure_ascii=False)
     print(json_response)
     views_logger.info("Завершение работы...")
-
-
-if __name__ == '__main__':
-    main()

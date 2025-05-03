@@ -14,11 +14,13 @@ services_logger.addHandler(file_handler)
 
 from src.utils import make_transactions
 
-def search_by_target(transactions: list) -> str:
+
+def search_by_target(transactions: list|None = None) -> str:
     """Функция возвращает JSON со всеми транзакциями,
     содержащими в описании или категории строку, заданную пользователем"""
     services_logger.info("получение списка транзакций и ключевого слова для поиска")
-    transactions = make_transactions()
+    if not transactions:
+        transactions = make_transactions()
     input_target = input("Введите значение для поиска: ").strip()
 
     target = re.compile(rf'(?:^|\s){input_target}(?:$|\s)', flags=re.IGNORECASE)
@@ -37,10 +39,12 @@ def search_by_target(transactions: list) -> str:
         services_logger.warning("поиск не дал результатов")
         return json.dumps({"Результаты поиска": "Ничего не нашлось"}, ensure_ascii=False)
 
-def search_by_phones(transactions: list) -> str:
+def search_by_phones(transactions: list|None = None) -> str:
     """Функция возвращает JSON со всеми транзакциями,
     содержащими в описании мобильные номера"""
     services_logger.info("получение списка транзакций")
+    if not transactions:
+        transactions = make_transactions()
     phones_transactions = []
     for transaction in transactions:
         if re.search(r'(?:^|\s)(?:\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}(?:$|\s)', transaction.get("Описание", "")):
@@ -52,7 +56,3 @@ def search_by_phones(transactions: list) -> str:
     else:
         services_logger.warning("поиск не дал результатов")
         return json.dumps({"Результаты поиска": "Ничего не нашлось"}, ensure_ascii=False)
-
-
-if __name__ == '__main__':
-    print(search_by_target(make_transactions()))
