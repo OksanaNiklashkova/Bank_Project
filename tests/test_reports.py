@@ -1,5 +1,6 @@
-import tempfile
 import os
+import tempfile
+
 import pandas as pd
 import pytest
 
@@ -16,15 +17,15 @@ def test_report_log1() -> None:
         def square_cube_nums() -> pd.DataFrame:
             new_list = []
             for x in range(1, 3):
-                new_list.append({"square": x ** 2, "cube": x ** 3})
+                new_list.append({"square": x**2, "cube": x**3})
             return pd.DataFrame(new_list)
 
         square_cube_nums()
         with open(filename, "r") as file:
             result = file.read().strip()
 
-            assert 'square' in result
-            assert 'cube' in result
+            assert "square" in result
+            assert "cube" in result
 
     finally:
         if os.path.exists(filename):
@@ -37,15 +38,16 @@ def test_report_log2() -> None:
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         filename = temp_file.name
     try:
+
         @report_log(filename=filename)
         def get_empty_df() -> pd.DataFrame:
-            new_list = []
+            new_list: list = []
             return pd.DataFrame(new_list)
 
         get_empty_df()
         with open(filename, "r") as file:
             result = file.read().strip()
-            assert '' in result
+            assert "" in result
 
     finally:
         if os.path.exists(filename):
@@ -58,8 +60,9 @@ def test_report_log3(capsys: pytest.CaptureFixture[str]) -> None:
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         filename = temp_file.name
     try:
+
         @report_log(filename=filename)
-        def get_date_df(date = '20.02.2020') -> pd.DataFrame:
+        def get_date_df(date: str = "20.02.2020") -> pd.DataFrame:
             new_list = []
             date = pd.to_datetime(date, dayfirst=True)
             new_list.append({"date": date})
@@ -75,36 +78,26 @@ def test_report_log3(capsys: pytest.CaptureFixture[str]) -> None:
         if os.path.exists(filename):
             os.remove(filename)
 
+
 @pytest.mark.parametrize("date_str", ["31.03.2023", "31/03/2023", "2023-03-31"])
 def test_spending_by_category1(date_str: str) -> None:
     """Тест для фильтрации данных по категории - варианты нормы"""
-    test_data = pd.DataFrame({
-        'Дата операции': ['01.03.2023 12:00:00'],
-        'Категория': ['Еда'],
-        'Сумма': [1000]
-    })
-    result = spending_by_category(test_data, 'Еда', date_str)
+    test_data = pd.DataFrame({"Дата операции": ["01.03.2023 12:00:00"], "Категория": ["Еда"], "Сумма": [1000]})
+    result = spending_by_category(test_data, "Еда", date_str)
     assert len(result) == 1
 
 
 def test_spending_by_category2() -> None:
     """Тест для фильтрации данных по категории - ошибка в формате даты"""
-    test_data = pd.DataFrame({
-        'Дата операции': ['01.03.2023 12:00:00'],
-        'Категория': ['Еда'],
-        'Сумма': [1000]
-    })
-    result = spending_by_category(test_data, 'Еда', "00.01.0001")
-    assert result == {'Неверный формат даты - 00.01.0001': 'Используйте формат ДД.ММ.ГГГГ'}
+    test_data = pd.DataFrame({"Дата операции": ["01.03.2023 12:00:00"], "Категория": ["Еда"], "Сумма": [1000]})
+    result = spending_by_category(test_data, "Еда", "00.01.0001")
+    assert result == {"Неверный формат даты - 00.01.0001": "Используйте формат ДД.ММ.ГГГГ"}
+
 
 @pytest.mark.parametrize("date, category", [("31.03.2024", "Еда"), ("31/03/2023", "Транспорт")])
 def test_spending_by_category3(date: str, category: str) -> None:
     """Тест для фильтрации данных по категории - данные по заданной категории
     в заданном периоде отсутствуют - возвращает пустой DF"""
-    test_data = pd.DataFrame({
-        'Дата операции': ['01.03.2023 12:00:00'],
-        'Категория': ['Еда'],
-        'Сумма': [1000]
-    })
+    test_data = pd.DataFrame({"Дата операции": ["01.03.2023 12:00:00"], "Категория": ["Еда"], "Сумма": [1000]})
     result = spending_by_category(test_data, category, date)
     assert len(result) == 0
