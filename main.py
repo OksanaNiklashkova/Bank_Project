@@ -10,7 +10,7 @@ def main() -> None:
     """Функция определяет главную логику проекта: в зависимости от ввода пользователя
     обращается к тем или иным модулям и возвращает данные в формате JSON"""
     # обработка и формирование информации для Главной страницы
-    main_views()
+    print(main_views())
 
     # запуск функционала поиска по ключевому слову
     search_by_target_check = bool(
@@ -25,7 +25,10 @@ def main() -> None:
         )
     )
     if search_by_target_check:
-        search_by_target_result = search_by_target()
+        transactions: list = make_transactions()
+        input_target: str = input("Введите значение для поиска: ").strip()
+
+        search_by_target_result = search_by_target(transactions, input_target)
         print("Результаты поиска по заданным словам:")
         print(search_by_target_result)
 
@@ -42,7 +45,8 @@ def main() -> None:
         )
     )
     if search_by_phones_check:
-        search_by_phones_result = search_by_phones()
+        transactions1: list = make_transactions()
+        search_by_phones_result = search_by_phones(transactions1)
         print("Результаты поиска по номерам телефонов:")
         print(search_by_phones_result)
 
@@ -59,10 +63,10 @@ def main() -> None:
         )
     )
     if spending_by_category_check:
-        transactions = pd.DataFrame(make_transactions())
+        transactions_df = pd.DataFrame(make_transactions())
         category = input("Введите категорию для формирования отчета: ")
         date = input("Введите дату для формирования отчета в формате 'ДД.ММ.ГГГГ': ")
-        spending_by_category_result = spending_by_category(transactions, category, date)
+        spending_by_category_result = spending_by_category(transactions_df, category, date)
         total_amount = round(spending_by_category_result["Сумма платежа"].sum(), 2)
         print(
             f"""Общая сумма расходов по категории '{category}' - {total_amount}

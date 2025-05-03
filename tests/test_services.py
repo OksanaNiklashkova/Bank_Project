@@ -34,9 +34,8 @@ def test_search_by_target(transactions: list, expected: list) -> None:
     """тесты для поиска под ключевому слову"""
     with (
         patch("src.services.make_transactions", return_value=transactions),
-        patch("builtins.input", return_value="Колхоз"),
     ):
-        result = json.loads(search_by_target(transactions))
+        result = json.loads(search_by_target(transactions, "Колхоз"))
         assert result == expected
 
 

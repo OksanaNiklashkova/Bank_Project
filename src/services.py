@@ -16,13 +16,10 @@ file_handler.setFormatter(file_formatter)
 services_logger.addHandler(file_handler)
 
 
-def search_by_target(transactions: Optional[list | None] = None) -> str:
+def search_by_target(transactions: list, input_target: str) -> str:
     """Функция возвращает JSON со всеми транзакциями,
     содержащими в описании или категории строку, заданную пользователем"""
     services_logger.info("получение списка транзакций и ключевого слова для поиска")
-    if not transactions:
-        transactions = make_transactions()
-    input_target = input("Введите значение для поиска: ").strip()
 
     target = re.compile(rf"(?:^|\s){input_target}(?:$|\s)", flags=re.IGNORECASE)
     print(target)
@@ -40,7 +37,7 @@ def search_by_target(transactions: Optional[list | None] = None) -> str:
         return json.dumps({"Результаты поиска": "Ничего не нашлось"}, ensure_ascii=False)
 
 
-def search_by_phones(transactions: Optional[list | None] = None) -> str:
+def search_by_phones(transactions: list) -> str:
     """Функция возвращает JSON со всеми транзакциями,
     содержащими в описании мобильные номера"""
     services_logger.info("получение списка транзакций")

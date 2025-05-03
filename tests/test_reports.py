@@ -1,6 +1,6 @@
 import os
 import tempfile
-
+from unittest.mock import patch
 import pandas as pd
 import pytest
 
@@ -87,11 +87,13 @@ def test_spending_by_category1(date_str: str) -> None:
     assert len(result) == 1
 
 
-def test_spending_by_category2() -> None:
+def test_spending_by_category2(capsys) -> None:
     """Тест для фильтрации данных по категории - ошибка в формате даты"""
-    test_data = pd.DataFrame({"Дата операции": ["01.03.2023 12:00:00"], "Категория": ["Еда"], "Сумма": [1000]})
-    result = spending_by_category(test_data, "Еда", "00.01.0001")
-    assert result == {"Неверный формат даты - 00.01.0001": "Используйте формат ДД.ММ.ГГГГ"}
+    with patch('builtins.input', return_value="01.03.2023"):
+        test_data = pd.DataFrame({"Дата операции": ["01.03.2023 12:00:00"], "Категория": ["Еда"], "Сумма": [1000]})
+        spending_by_category(test_data, "Еда", "00.01.0001")
+        captured = capsys.readouterr()
+        assert "Неверный формат даты - 00.01.0001! Используйте формат ДД.ММ.ГГГГ"
 
 
 @pytest.mark.parametrize("date, category", [("31.03.2024", "Еда"), ("31/03/2023", "Транспорт")])

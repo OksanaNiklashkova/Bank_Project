@@ -49,27 +49,31 @@ def report_log(filename: str = "report.json") -> Any:
 
 
 @report_log()
-def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame|pd.Series:
+def spending_by_category(transactions_df: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
     """Функция получает список транзакций (DF), категорию и дату (по умолчанию - текущую)
     и возвращает траты по заданной категории за последние три месяца (от переданной даты)."""
     reports_logger.info(f"получение данных о периоде для отчета о транзакциях по категории {category}")
 
     if date:
-        try:
-            end_date = pd.to_datetime(date, dayfirst=True)
-        except ValueError as e:
-            reports_logger.error(f"Ошибка в формате даты: {date}. Ошибка: {str(e)}")
-            return pd.DataFrame({f"Неверный формат даты - {date}": "Используйте формат ДД.ММ.ГГГГ"})
+        end_date = None
+        while not end_date:
+            try:
+                end_date = pd.to_datetime(date, dayfirst=True)
+            except ValueError as e:
+                reports_logger.error(f"Ошибка в формате даты: {date}. Ошибка: {str(e)}")
+                print(f"Неверный формат даты - {date}! Используйте формат ДД.ММ.ГГГГ")
+                date = input("Введите дату для формирования отчета в формате 'ДД.ММ.ГГГГ': ")
+
     else:
         end_date = pd.to_datetime(datetime.now())
 
     start_date = end_date - pd.DateOffset(months=3)
-    transactions["Дата операции"] = pd.to_datetime(transactions["Дата операции"], dayfirst=True)
+    transactions_df["Дата операции"] = pd.to_datetime(transactions_df["Дата операции"], dayfirst=True)
     reports_logger.info(f"формирование отчета о транзакциях по категории {category}")
-    filtered_transactions_df = transactions[
-        (transactions["Дата операции"] >= start_date)
-        & (transactions["Дата операции"] <= end_date)
-        & (transactions["Категория"] == category)
+    filtered_transactions_df = transactions_df[
+        (transactions_df["Дата операции"] >= start_date)
+        & (transactions_df["Дата операции"] <= end_date)
+        & (transactions_df["Категория"] == category)
     ]
     filtered_transactions_df = filtered_transactions_df.copy()
     filtered_transactions_df["Дата операции"] = filtered_transactions_df["Дата операции"].dt.strftime(
