@@ -2,23 +2,17 @@ from unittest.mock import patch, mock_open
 import json
 import pytest
 
-from src.views import get_current_hour
+from src.views import main_views
 import src.views
 
-def test_get_current_hour() -> None:
-    """Тест для функции, получающей текущее время (час),
-    проверяет, что возвращаемое значение - целое число"""
-    result = get_current_hour()
-    assert isinstance(result, int)
 
-
-def test_main1(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> None:
+def test_main_views1(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> None:
     """Тест для функции main - норма"""
     test_cases = [
-        (6, "Доброе утро!"),
-        (11, "Добрый день!"),
-        (17, "Добрый вечер!"),
-        (23, "Доброй ночи!"),
+        ("12.01.2018 06:00:00", "Доброе утро!"),
+        ("12.01.2018 11:00:00", "Добрый день!"),
+        ("12.01.2018 17:00:00", "Добрый вечер!"),
+        ("12.01.2018 23:00:00", "Доброй ночи!"),
     ]
     test_settings = {
         "user_currencies": ["USD"],
@@ -26,9 +20,8 @@ def test_main1(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> 
         "user_stocks": ["AAPL"]
     }
 
-    with patch('src.views.get_current_hour') as mock_hour, \
+    with patch("builtins.input") as mock_input, \
             patch('src.views.make_transactions', return_value=get_transactions_2),\
-            patch("builtins.input", return_value="19.01.2018"),\
             patch('src.views.filter_by_currency_month', return_value=get_transactions_2),\
             patch('src.views.filtered_by_card_number', return_value=get_transactions_2),\
             patch('src.views.get_card_info', return_value=[{"last_digits": "4556", "total_spent": 88068.0, "cashback": 880.0},]),\
@@ -38,8 +31,8 @@ def test_main1(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> 
             patch("src.views.get_stocks_rates", return_value={"stocks": [{"stock": "AAPL", "price": "212.44"},]}):
 
         for hour, expected_greeting in test_cases:
-            mock_hour.return_value = hour
-            src.views.main()
+            mock_input.return_value = hour
+            src.views.main_views()
             captured = capsys.readouterr()
             assert expected_greeting in captured.out
             assert "last_digits" in captured.out
@@ -48,7 +41,7 @@ def test_main1(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> 
             assert "stocks" in captured.out
 
 
-def test_main2(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> None:
+def test_main_views2(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> None:
     """Тест для функции main - введен неверный формат даты, нет данных за выбранный период"""
 
     test_settings = {
@@ -57,36 +50,25 @@ def test_main2(get_transactions_2: list, capsys: pytest.CaptureFixture[str]) -> 
         "user_stocks": ["AAPL"]
     }
 
-    with patch('src.views.get_current_hour', return_value=12),\
+    with patch("builtins.input", side_effect=['20/02/2023 12:00:00', '20.02.2023 12:00:00']), \
          patch('src.views.make_transactions', return_value=get_transactions_2),\
-         patch("builtins.input", side_effect=['20/02/2023', '20.02.2023']), \
          patch('builtins.open', mock_open(read_data=json.dumps(test_settings))),\
-         patch('src.views.get_exchange_rate', return_value={"currencies": [{"currency": "USD", "rate": 81.726},]}),\
-         patch("src.views.get_stocks_rates", return_value={"stocks": [{"stock": "AAPL", "price": "212.44"},]}):
+         patch('src.views.get_exchange_rate', return_value={}),\
+         patch("src.views.get_stocks_rates", return_value={}):
 
-         src.views.main()
+         src.views.main_views()
          captured = capsys.readouterr()
          assert "Формат данных не соответствует запросу!" in captured.out
          assert "Данные о транзакциях за период отсутствуют" in captured.out
 
 
-def test_main3(capsys: pytest.CaptureFixture[str]) -> None:
+def test_main_views3(capsys: pytest.CaptureFixture[str]) -> None:
     """Тест для функции main - файл не найден, пуст или имеет не-xlsx формат"""
-    test_cases = [
-        (6, "Доброе утро!"),
-        (11, "Добрый день!"),
-        (17, "Добрый вечер!"),
-        (23, "Доброй ночи!"),
-    ]
-
-    with patch('src.views.get_current_hour') as mock_hour, \
+    with patch("builtins.input", return_value = '20.02.2023 12:00:00'), \
          patch('src.views.make_transactions', return_value=[]):
-                for hour, expected_greeting in test_cases:
-                    mock_hour.return_value = hour
-                    src.views.main()
-                    captured = capsys.readouterr()
-                    assert expected_greeting in captured.out
-                    assert "Не удалось получить данные о транзакциях" in captured.out
+                src.views.main_views()
+                captured = capsys.readouterr()
+                assert "Не удалось получить данные о транзакциях" in captured.out
 
 
 def test_main_logging(get_transactions_2, capsys):
@@ -97,10 +79,9 @@ def test_main_logging(get_transactions_2, capsys):
         "user_stocks": ["AAPL"]
     }
 
-    with patch('src.views.get_current_hour', return_value=12), \
+    with patch("builtins.input", return_value = '20.02.2023 12:00:00'), \
             patch('src.views.make_transactions', return_value=get_transactions_2), \
-            patch("builtins.input", return_value="19.01.2023"), \
             patch('builtins.open', mock_open(read_data=json.dumps(test_settings))), \
             patch('src.views.views_logger.info') as mock_logger:
-        src.views.main()
+        src.views.main_views()
         mock_logger.assert_any_call("Завершение работы...")
