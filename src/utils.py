@@ -11,6 +11,7 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY_STOCKS")
 
 log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
+os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, "utils_logs.log")
 utils_logger = logging.getLogger("services_logger")
 utils_logger.setLevel(logging.DEBUG)

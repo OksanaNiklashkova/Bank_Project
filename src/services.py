@@ -7,6 +7,7 @@ from typing import Optional
 from src.utils import make_transactions
 
 log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
+os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, "services_logs.log")
 services_logger = logging.getLogger("services_logger")
 services_logger.setLevel(logging.DEBUG)
@@ -57,3 +58,5 @@ def search_by_phones(transactions: list) -> str:
     else:
         services_logger.warning("поиск не дал результатов")
         return json.dumps({"Результаты поиска": "Ничего не нашлось"}, ensure_ascii=False)
+
+print(search_by_phones(make_transactions()))

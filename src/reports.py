@@ -9,6 +9,7 @@ import pandas as pd
 
 
 log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "logs")
+os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, "reports_logs.log")
 reports_logger = logging.getLogger("services_logger")
 reports_logger.setLevel(logging.DEBUG)
